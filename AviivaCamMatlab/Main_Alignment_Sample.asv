@@ -1,0 +1,226 @@
+
+% This code is for finding the right place on the sample and also testing
+% the imaging possible on the image 
+
+
+
+%% Background collection - block the sample arm
+
+% Define the placement on the galvo mirror
+write(dq,[0 0]);
+
+% Moving the sample to the 0-offset
+Offset = 0.44;
+movePI(offsetPI,Offset,ax)
+
+% Set the exposuretime (µs)
+ExposureValue = 400;
+
+% Ensure that the exposure time is the correct on
+Cam = Cam.StopStreaming();
+Cam.SetExposure(ExposureValue);
+Cam = Cam.StartStreaming();
+% 
+% %% Collecting an rough reference and sample arm to remove BG noise from these for alignment purposes
+% waitfor(msgbox("Start by blocking the sample arm - Press okay when done"));
+% for i=1:10
+% 
+%     pause(0.6)
+% 
+%     ImageRef2 = Cam.GetImage();
+%     
+%     if i > 1
+%         dataRef2(:,i) = mean(ImageRef2,1);
+%     end
+% 
+% end
+% ReferenceArm2 = mean(dataRef2,2);
+% 
+% 
+% waitfor(msgbox("Start by blocking the reference arm - Press okay when done"));
+% for i=1:10
+% 
+%     pause(0.6)
+% 
+%     ImageSample2 = Cam.GetImage();
+% 
+%     dataSample2(:,i) = mean(ImageSample2,1);
+% 
+% end
+% SampleArm2 = mean(dataSample2,2);
+% 
+
+
+%% Used for alignment of the system
+
+%;
+for i = 1:50000
+
+    pause(0.2)
+    
+    % Collect the image from the spectrum camera
+    Image = Cam.GetImage();
+
+    % Take average of the 100lines
+    Data = mean(Image,1);
+    
+%     figure(1)
+%     imagesc(Image);
+%     clim([0 255]);
+%     axis image;
+%     colormap gray;
+%     title(i);
+%     drawnow;
+    
+    figure(2)
+    % Show the  raw spectrum
+    subplot(1,2,1)
+    plot(Data)
+   % ylim([0 255])
+    title(i);
+    drawnow;
+
+    % Show the A-scan
+    subplot(1,2,2)
+    dataOCTlin = data2oct_Alignment(Data); %,ReferenceArm2,SampleArm2);
+    plot(dataOCTlin)
+   %  ylim([0 0.15])
+
+end
+
+%% Looking at the B-scan
+
+clear OCTImage OCTSpectrum
+
+% Date of the experiments
+date = '20241004' ;
+
+% Which number of experiment this is on the day
+Experiment = 4;
+
+% Type of sample
+Sample = 'Parafilm';
+
+% Reference focus
+RefValue = '248px';
+
+% Sample height setting
+SampleHeight = '223px';
+
+% Value of ND filters in the reference arm
+NDfilter = '2';
+
+% Power setting
+PowerSetting = 'HP'; % 
+
+% No of Ascans
+Ascan = 100;
+
+% Set voltage for galvo in the x-axis (B-scan size)
+MinVoltageX = 0; %min -6V
+MaxVoltageX = 0.25; %max 6V
+
+% Creating a galvo movement array
+GalvoX = linspace(MinVoltageX,MaxVoltageX,Ascan);
+
+% Set voltage for the y-axis
+VoltageY = 0;
+
+for n = 1:Ascan
+
+    % Move Galvo in x-direction
+    outputX = GalvoX(n);
+    write(dq,[outputX VoltageY]);
+
+    pause(0.1)
+    
+    % Take the image from the camera
+    Image = Cam.GetImage();
+
+    % Take average of the 100lines
+    Data = mean(Image,1);
+    
+    % Converting the spectrum to an A-scan    
+    dataOCTlin = data2oct_Alignment(Data);%,ReferenceArm2,SampleArm2);
+ 
+    % Save all A-scans for B and offsets in one matrix
+   OCTImage(:,n) = dataOCTlin;
+
+    % Save the spectrum
+    OCTSpectrum(:,n) = Data;
+    
+    fprintf('Image collection: Ascan %d \n',n)
+
+end
+
+figure
+imagesc(20.*log10(OCTImage(:,2:end)))
+% imshow((20.*log10(OCTImage(:,2:end))),[])
+colormap(gray)
+%clim([-40 0])
+
+
+%% Collect the correct reference arm
+
+waitfor(msgbox("Start by blocking the sample arm - Press okay when done"));
+for i=1:10
+
+    pause(0.2)
+
+    ImageRef = Cam.GetImage();
+
+    dataRef(:,i) = mean(ImageRef,1);
+
+end
+ReferenceArm = mean(dataRef,2);
+
+
+%% Run for the sample arm also
+
+waitfor(msgbox("Now block the reference arm - Press okay when done"));
+
+for nnn = 1:Ascan
+
+    % Move Galvo in x-direction
+    outputX = GalvoX(nnn);
+    write(dq,[outputX VoltageY]);
+
+    pause(0.1)
+    
+    % Take the image from the camera
+    ImageSampleArm = Cam.GetImage();
+
+    % Take average of the 100lines
+    SampleData = mean(ImageSampleArm,1);
+
+    % Save all the spectrum taken:
+    SampleArm(:,nnn) = SampleData;
+
+    fprintf('Sample arm collection: Ascan %d \n',nnn)
+
+end
+
+%% Save the best results of the exposure times etc. 
+
+save(fullfile(FolderName,sprintf('%s_Expt%d_%s_850nmOCT_Ascan%d_Offset%d_Ref%s_Sample%s_%s_Exposure%d_NDFilter%s.mat',...
+    date,Experiment,Sample,Ascan,Offset,RefValue,SampleHeight,PowerSetting,ExposureValue,NDfilter)),...
+    'OCTSpectrum','ReferenceArm','SampleArm','ExposureValue','Offset','GalvoX')
+
+%% Show the image with the sample arm and dispersion compensation removed
+
+a2 = -1e-6;
+a3 = -35e-9; 
+
+for nn = 1:Ascan
+
+    Lines = data2oct_Sep24_2(OCTSpectrum(:,nn).',ReferenceArm,SampleArm(:,nn),a2,a3);
+
+    OCTImage2(:,nn) = Lines ;
+
+end
+
+figure
+imagesc(20.*log10(OCTImage2));
+%imagesc(OCTImage2);
+clim([-30 10])
+colormap(gray)
