@@ -164,12 +164,12 @@ int GetImage(int* pImage) {
 
     // Error checks
     if (!Result.IsOK()) {
-        cout << "Failed to acquire image buffer.\n";
+        //cout << "Failed to acquire image buffer.\n";
         return -1;
     }
     PvPayloadType PayloadType = locBuffer->GetPayloadType();
     if (PayloadType != PvPayloadTypeImage) {
-        cout << "Failed to acquire image\n";
+        //cout << "Failed to acquire image\n";
         pStream->QueueBuffer(locBuffer);
         return -2;
     }
@@ -185,7 +185,7 @@ int GetImage(int* pImage) {
 
     // Error checks
     if (pImageData->GetWidth() == 0 && pImageData->GetHeight() == 0) {
-        cout << "Failed to acquire image\n";
+       // cout << "Failed to acquire image\n";
         pStream->QueueBuffer(locBuffer);
         return -3;
     }
