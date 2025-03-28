@@ -18,8 +18,8 @@ movePI(offsetPI,Offset,'1')
 
 % Ensure that the exposure time is the correct on
 Cam = Cam.StopStreaming();
-Cam.SetExposure(200); % in us
-Cam.SetGain(-10);
+Cam.SetExposure(100); % in us
+Cam.SetGain(-9);
 Cam = Cam.StartStreaming();
 
 %% Live A-scan
