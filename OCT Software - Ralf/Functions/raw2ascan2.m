@@ -38,13 +38,13 @@ function [z, data] = raw2ascan2(data, ReferenceArm, SampleArm)
     a3 = 0; 
 
     % Crops
-    pix = (780:1720).'; % Spectral domain crop
-    ncrop = 25; % DC crop
+    pix = (900:1620).'; % Spectral domain crop
+    ncrop = 30; % DC crop
     
     % Calibration
     lam_cal = [832 846 860].';
-    %pix_cal = [1048 1253 1419].'; % Low power
-    pix_cal = [994 1218 1407].'; % High power
+    pix_cal = [1048 1253 1419].'; % Low power
+    %pix_cal = [1094 1316 1502].'; % High power
     
     % Use calibration to determine which pixel is which wavelength
     % Fitting function expects data in column format.
@@ -52,7 +52,7 @@ function [z, data] = raw2ascan2(data, ReferenceArm, SampleArm)
     lam = feval(fres, pix.');
     
     % Convert to regularly-spaced k-vectors
-    k = (2 * pi)./lam;
+    k = 2*pi./lam;
     Dk = max(k) - min(k);
     dk = Dk/length(k);
     dz = 1/Dk*1e-9;

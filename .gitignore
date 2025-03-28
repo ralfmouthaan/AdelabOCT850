@@ -3,6 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+Software to be installed/
+OCT Software - Ralf/Results/
+OCT Software - Freja/Results/
+
 opencv_world460d.dll
 opencv_world460.dll
 opencv_world470d.dll

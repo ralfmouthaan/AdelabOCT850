@@ -16,21 +16,11 @@ addpath('Functions\')
 
 %% Spectrometer camera
 
-% Define a gain 
-GainValue = -18;
-
-% Exposure time for the camera
-ExposureValue = 50;
-
 % Start up camera
 Cam = AviivaCam();
-pause(1)
 Cam = Cam.Startup();
 
-% Set parameters
-Cam.SetGain(GainValue);
-Cam.SetExposure(ExposureValue);
-
+%%
 % Determine camera properties
 Width = Cam.GetWidth();
 Height = Cam.GetHeight();
@@ -82,6 +72,10 @@ end
 
 % Check position that position is correct
 offsetPI.qPOS(ax)
+
+% Move to home position
+HomeOffset = 0.5;
+movePI(offsetPI,HomeOffset,'1')
 
 %% Galvo mirror
 

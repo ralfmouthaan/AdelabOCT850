@@ -9,7 +9,7 @@
 classdef AviivaCam
 
     properties
-        locExposure = 0; % A local estimate of what the exposure is.
+
         bolStartup = false;
         bolStreaming = false;
     end
@@ -19,20 +19,23 @@ classdef AviivaCam
         function obj = AviivaCam() 
 
             % Load DLL
-            if libisloaded('AviivaCamDll') == false
-                loadlibrary('AviivaCamDll', 'AviivaCamDll.h');
+            if libisloaded('AviivaCamDll')
+                unloadlibrary('AviivaCamDll');
             end
-            
+            loadlibrary('AviivaCamDll', 'AviivaCamDll.h');
+
         end
         function delete(~)
 
-            if libisloaded('AviivaCamDll') == true
-                unloadlibrary('AviivaCam');
+            if libisloaded('AviivaCamDll') == false
+                return;
             end
+
+            unloadlibrary('AviivaCam');
 
         end
 
-        function Startup(me)
+        function me = Startup(me)
 
             fprintf('Aviiva Cam: Starting up...\n')
 
@@ -40,20 +43,23 @@ classdef AviivaCam
             Err = calllib('AviivaCamDll', 'Startup');
             switch Err
                 case -1
+                    unloadlibrary('AviivaCam');
                     error('Could find camera. Is camera connected, and is MAC address correct?');
                 case -2
+                    unloadlibrary('AviivaCam');
                     error('Unable to connect to camera');
                 case -3
+                    unloadlibrary('AviivaCam');
                     error('Cannot stream from camera');
                 case -4
+                    unloadlibrary('AviivaCam');
                     error('Camera does not support GEV');
             end
 
             me.bolStartup = true;
-            me.locExposure = me.GetExposure();
 
         end
-        function Shutdown(me)
+        function me = Shutdown(me)
             
             fprintf('Aviiva Cam: Shutting Down...\n')
             
@@ -77,16 +83,13 @@ classdef AviivaCam
 
             % Check camera is on.
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Start camera before you start streaming');
             end
 
             calllib('AviivaCamDll', 'StartStreaming');
 
             me.bolStreaming = true;
-            
-            me.GetImage();
-            me.waitfor(me.locExposure);
-            me.GetImage();
 
         end
         function me = StopStreaming(me)
@@ -94,64 +97,46 @@ classdef AviivaCam
             fprintf('Aviiva Cam: Stopping Streaming\n')
 
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started');
             end
-            if me.bolStreaming == true
-                calllib('AviivaCamDll', 'StopStreaming');
-                me.bolStreaming = false;
+            if me.bolStreaming == false
+                unloadlibrary('AviivaCam');
+                error('Camera is not streaming');
             end
+
+            calllib('AviivaCamDll', 'StopStreaming');
+
+            me.bolStreaming = false;
 
         end
         
         function Image = GetImage(me)
 
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started');
             end
             if me.bolStreaming == false
+                unloadlibrary('AviivaCam');
                 error('Camera is not streaming');
             end
 
             Width = me.GetWidth();
             Height = me.GetHeight();
             Image = zeros(Width, Height);
-
-%             me.waitfor(me.locExposure*1.2);
-%             [Err, Image] = calllib('AviivaCamDll', 'GetImage', Image);
-% 
-%             if Err < 0
-%                 error('Failed to acquire image');
-%             end
-
-            % This is a hack to ensure we get an up to date image. I should
-            % check the C++ code on all this.
+            [Err, Image] = calllib('AviivaCamDll', 'GetImage', Image);
             
-            % Flush image buffer
-            Err = 0;
-            count = 0;
-            while Err == 0
-
-                count = count + 1;
-                if count > 100
-                    error('Failed to clear camera buffer');
-                end
-
-                [Err, Image] = calllib('AviivaCamDll', 'GetImage', Image);
-
-            end
-
-            % Acquire new image
-            count = 0;
-            while Err < 0
-
-                count = count + 1;
-                if count > 10
-                    error('Failed to acquire image abc');
-                end
-
-                me.waitfor(me.locExposure);
-                [Err, Image] = calllib('AviivaCamDll', 'GetImage', Image);
-
+            switch Err 
+                case -1
+                    unloadlibrary('AviivaCam');
+                    error('Failed to acquire image buffer');
+                case -2
+                    unloadlibrary('AviivaCam');
+                    error('Failed to acquire image');
+                case -3
+                    unloadlibrary('AviivaCam');
+                    error('Failed to acquire image');
             end
 
             Image = Image.'; % We seem to need to flip it.
@@ -161,6 +146,7 @@ classdef AviivaCam
         function Width = GetWidth(me)
 
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started')
             end
 
@@ -168,9 +154,11 @@ classdef AviivaCam
             [Err, Width] = calllib('AviivaCamDll', 'GetWidth', Width);
 
             if Err ~= 0
+                unloadlibrary('AviivaCam');
                 error('Could not determine image width');
             end
             if Width == 0
+                unloadlibrary('AviivaCam');
                 error('Could not determine image width')
             end
 
@@ -178,6 +166,7 @@ classdef AviivaCam
         function Height = GetHeight(me)
 
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started')
             end
 
@@ -185,9 +174,11 @@ classdef AviivaCam
             [Err, Height] = calllib('AviivaCamDll', 'GetHeight', Height);
 
             if Err ~= 0
+                unloadlibrary('AviivaCam');
                 error('Could not determine image height');
             end
             if Height == 0
+                unloadlibrary('AviivaCam');
                 error('Could not determine image height')
             end
 
@@ -195,6 +186,7 @@ classdef AviivaCam
         function Gain = GetGain(me)
 
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started');
             end
 
@@ -202,6 +194,7 @@ classdef AviivaCam
             [Err, Gain] = calllib('AviivaCamDll', 'GetGain', Gain);
 
             if Err ~= 0
+                unloadlibrary('AviivaCam');
                 error('Could not determine camera gain');
             end
 
@@ -209,15 +202,18 @@ classdef AviivaCam
         function SetGain(me, Gain)
 
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started');
             end
             if me.bolStreaming == true
+                unloadlibrary('AviivaCam');
                 error('Cannot change gain while camera is streaming');
             end
 
             Err = calllib('AviivaCamDll', 'SetGain', Gain);
 
             if Err ~= 0
+                unloadlibrary('AviivaCam');
                 error('Could not set gain');
             end
 
@@ -225,6 +221,7 @@ classdef AviivaCam
         function Exposure = GetExposure(me)
     
             if me.bolStartup == false
+                unloadlibrary('AviivaCam');
                 error('Camera has not been started')
             end
 
@@ -232,41 +229,27 @@ classdef AviivaCam
             [Err, Exposure] = calllib('AviivaCamDll', 'GetExposure', Exposure);
 
             if Err ~= 0
+                unloadlibrary('AviivaCam');
                 error('Could not determine camera exposure');
             end
-
-            me.locExposure = Exposure;
 
         end
         function me = SetExposure(me, Exposure)
 
            if me.bolStartup == false
+               unloadlibrary('AviivaCam');
                 error('Camera has not been started');
             end
             if me.bolStreaming == true
+                unloadlibrary('AviivaCam');
                 error('Cannot change exposure while camera is streaming');
             end
 
             Err = calllib('AviivaCamDll', 'SetExposure', Exposure);
 
             if Err ~= 0
+                unloadlibrary('AviivaCam');
                 error('Could not set exposure');
-            end
-
-            me.locExposure = Exposure;
-
-        end
-
-        function waitfor(me, waitformilliseconds)
-
-            % I have a strong suspiction the pause() function doesn't allow
-            % the C++ dll to run in the background, so instead we do this.
-            
-            start = datetime('now');
-            stop = datetime('now');
-
-            while milliseconds(stop - start) < waitformilliseconds
-                stop = datetime('now');
             end
 
         end
