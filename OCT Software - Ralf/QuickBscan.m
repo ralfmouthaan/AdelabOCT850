@@ -60,6 +60,6 @@ OCTImagedB = 20*log10(OCTImage);
 figure;
 imagesc(x*1e3, z*1e6, OCTImagedB)
 colormap(gray)
-clim([-10 max(max(OCTImagedB))+1])
+clim([-30 max(max(OCTImagedB))+1])
 xlabel('x (\mum)');
 ylabel('z (\mum)');

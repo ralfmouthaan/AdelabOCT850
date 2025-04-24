@@ -11,8 +11,8 @@ clc;
 clearvars -except Cam Controller dq offsetPI HomeOffset;
 addpath('Functions\')
 
-Foldername = 'Results/';
-Filename = '20250218_Expt1_Acetate_850nmOCT';
+Foldername = 'Results/20250408 - Polyfilm Results/';
+Filename = '20250408_PolyFilm_Offset0_850nmOCT - Rpt.mat';
 RawData =  load([Foldername Filename]);
 
 %%
@@ -34,7 +34,7 @@ OCTImage = OCTImage/max(median(OCTImage.'));
 OCTImagedB = 20*log10(OCTImage);
 imagesc(RawData.x*1e3, z*1e6, OCTImagedB);
 xlabel('\mum'); ylabel('\mum');
-clim([-30 5])
+clim([-40 10])
 colormap(gray)
 set(gca, 'FontSize', 14)
 xtickangle(45)

@@ -13,13 +13,13 @@ clearvars -except Cam Controller dq offsetPI HomeOffset;
 write(dq, [0 0]);
 
 % Moving the sample to the offset
-Offset = HomeOffset + 0.00;
+Offset = HomeOffset + 0.06;
 movePI(offsetPI,Offset,'1')
 
 % Ensure that the exposure time is the correct on
 Cam = Cam.StopStreaming();
-Cam.SetExposure(100); % in us
-Cam.SetGain(-9);
+Cam.SetExposure(350); % in us
+Cam.SetGain(0);
 Cam = Cam.StartStreaming();
 
 %% Live A-scan

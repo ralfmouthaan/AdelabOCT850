@@ -14,13 +14,13 @@ clc; close all
 
 %% Manual changeable settings - Initial values
 
-date = '20250218' ; % Date of the experiments
+date = '20250408' ; % Date of the experiments
 ExperimentNo = 1; % Which number of experiment this is on the day
-Sample = 'Acetate'; % Type of sample
-RefHeight = '0.1mm'; % Reference focus height
-SampleHeight = '0.1mm'; % Sample height setting
-PowerSetting = 'HP'; % LP (low power) or HP (High power)
-Offset = HomeOffset + 0.00 ; % Offset in mm as set on the motor
+Sample = 'PolyFilm'; % Type of sample
+RefHeight = '0.5mm'; % Reference focus height
+SampleHeight = '0.5mm'; % Sample height setting
+PowerSetting = 'LP'; % LP (low power) or HP (High power)
+Offset = HomeOffset + 0.06 ; % Offset in mm as set on the motor
 
 % Galvo
 MiddleV = 0.0; % This voltage corresponds to the mid-point of the range where the spot is not aberrated
@@ -32,8 +32,8 @@ xrange_V = xrange_um/GalvoCal;
 GalvoV = linspace(MiddleV - xrange_V/2, MiddleV + xrange_V/2, NoAscans);
 x = (GalvoV - min(GalvoV))*GalvoCal/1000; % x coordinates in mm
 
-Exposure = 100;
-Gain = -0;
+Exposure = 350;
+Gain = 0;
 Cam = Cam.StopStreaming();
 Cam.SetExposure(Exposure); % in us
 Cam.SetGain(Gain);

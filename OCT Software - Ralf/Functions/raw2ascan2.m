@@ -42,13 +42,15 @@ function [z, data] = raw2ascan2(data, ReferenceArm, SampleArm)
     ncrop = 30; % DC crop
     
     % Calibration
-    %lam_cal = [832 846 860].';
+    %lam_cal = [832 846 860].'*1e-9;
     %pix_cal = [1048 1253 1419].'; % Low power
     %pix_cal = [1094 1316 1502].'; % High power
-    lam_cal = [846-25 846 846+25].';
-    pix_cal = [625 1253 1750].';
+    %pix_cal = [625 1253 1750].';
+    lam_cal = [849-16 849 849+16].'*1e-9;
+    pix_cal = [1018 1248 1498].';
     
     % Use calibration to determine which pixel is which wavelength
+
     % Fitting function expects data in column format.
     fres = fit(pix_cal, lam_cal, 'poly1');
     lam = feval(fres, pix.');
@@ -57,7 +59,7 @@ function [z, data] = raw2ascan2(data, ReferenceArm, SampleArm)
     k = 2*pi./lam;
     Dk = max(k) - min(k);
     dk = Dk/length(k);
-    dz = 1/Dk*1e-9;
+    dz = 1/Dk;
     kfit = (min(k):dk:max(k)).';
     kdisp = -length(kfit)/2 + 1/2:length(kfit)/2 - 1/2; 
     dispcomp = exp(1i*(a2*kdisp.^2 + a3*kdisp.^3));
@@ -141,6 +143,6 @@ function [z, data] = raw2ascan2(data, ReferenceArm, SampleArm)
     % Only take the one half of the spectrum/data
     % Removal of DC 
     data = data(ncrop:length(data)/2);
-    z = (1:length(data))*dz*2; % Multiply by 2 is fudge factor to account for double-pass?
+    z = (1:length(data))*dz/2*8.3; % Divide to account for double-pass? 8.3 even bigger fudge factor?
 
 end
